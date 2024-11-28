@@ -11,6 +11,9 @@ import shapefile
 #visualization libraries
 %matplotlib inline
 import matplotlib.pyplot as plt
+
+# ^^^ SO FAR SO GOOD IT WORKS
+
 #project modules
 import gnssr4river.fresnel.fresnelzone
 import gnssr4river.fresnel.plotfresnel
