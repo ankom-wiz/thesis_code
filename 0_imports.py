@@ -1,3 +1,5 @@
+pip install git+https://github.com/ITC-Water-Resources/gnssr4water.git
+
 #general purpose libraires
 import math
 import numpy as np
