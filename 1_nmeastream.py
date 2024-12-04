@@ -20,6 +20,14 @@ from datetime import datetime,timedelta
 from gnssr4water.io.nmea import dispatchParse,nmeavalid
 import lz4.frame
 
+### Set up the NMEA file stream
+import os
+nmea_files_path = r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\Jinja_Spring_summer2024"
+
+### Collect all valid NMEA files
+nmea_files = [os.path.join(nmea_files_path, f) for f in os.listdir(nmea_files_path) if f.endswith(('.gz', '.lz4', '.txt'))]
+
+
 class NMEAFileStream:
     """
     Creates a continuous stream from a list of compressed nmea file logs. Note: the files must be chronological order!
@@ -156,3 +164,6 @@ class NMEAFileStream:
                 self.isFile=True
         except StopIteration:
             self.fid=None
+
+### Create the NMEA stream object
+nmea_stream = NMEAFileStream(nmea_files)
