@@ -27,11 +27,44 @@ from scipy.stats import  binned_statistic_2d
 from shapely.geometry import Polygon,Point
 from shapely import to_wkt,from_wkt
 import xarray as xr
-import os
 from datetime import datetime
 from gnssr4water.core.gnss import GPSL1
 from gnssr4water.fresnel import firstFresnelZone,elev_from_radius
 from numba import jit
+
+### Added imports
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
+### Example polygon
+# Define polygon around Jinja
+jinja_polygon = Polygon([
+    (33.17, 0.35),  # Top-left corner
+    (33.35, 0.35),  # Top-right corner
+    (33.35, 0.25),  # Bottom-right corner
+    (33.17, 0.25),  # Bottom-left corner
+    (33.17, 0.35)   # Closing the loop
+])
+
+# Parameters for SkyMask
+lon = 33.26  # Approx. central longitude of Jinja
+lat = 0.30   # Approx. central latitude of Jinja
+ellipsHeight = 1130  # Ellipsoidal height (e.g., meters)
+antennaHeight = 10   # Antenna height in meters
+
+### Visualisation process (Skymask)
+# Create a GeoDataFrame
+gdf = gpd.GeoDataFrame({'geometry': [jinja_polygon]}, crs="EPSG:4326")
+
+# Plot the polygon
+gdf.plot(color='blue', alpha=0.5)
+plt.title("Jinja Region, Lake Victoria")
+plt.xlabel("Longitude")
+plt.ylabel("Latitude")
+plt.grid(True)
+plt.show()
+### End of additions
+
 
 def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
     if not geopoly.is_simple:
@@ -349,6 +382,8 @@ class SkyMask:
         skmsk=SkyMask(poly=self.poly.segmentize(max_segment_length=max_segment_length),lon=lon,lat=lat,ellipsHeight=oh,antennaHeight=ah)
         return skmsk
 
+
+
 class SimpleMask(SkyMask):
     def __init__(self,lon,lat,ellipsHeight,antennaHeight,elevations=[5,40],azimuths=[0,360],wavelength=GPSL1.length):
         pnts=[(azimuths[0],elevations[0]),(azimuths[1],elevations[0]),(azimuths[1],elevations[1]),(azimuths[0],elevations[1]),(azimuths[0],elevations[0])]
@@ -368,3 +403,7 @@ class SimpleMask(SkyMask):
             return True
         #ok point is not masked
         return False
+
+### Make an object
+# Initialize SkyMask with the geopoly
+skymask = SkyMask(geopoly=jinja_polygon, lon=lon, lat=lat, ellipsHeight=ellipsHeight, antennaHeight=antennaHeight)
