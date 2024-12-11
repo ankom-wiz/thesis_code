@@ -63,8 +63,23 @@ plt.xlabel("Longitude")
 plt.ylabel("Latitude")
 plt.grid(True)
 plt.show()
-### End of additions
 
+### Import mask from local
+# Path to the shapefile 
+# Current path is an example - file does not exist
+maskpolyg = "C:/Users/Anastasios_Komiotis/Desktop/Jinja_1km_polygon.shp"
+
+polygon_gdf = gpd.read_file(maskpolyg)
+#print(polygon_gdf)
+
+# Extract the geometry of the first polygon (or adjust if multiple features exist)
+geopoly = polygon_gdf.geometry.iloc[0]
+
+# Ensure CRS is WGS84 (latitude/longitude)
+if polygon_gdf.crs != "EPSG:4326":
+    polygon_gdf = polygon_gdf.to_crs("EPSG:4326")
+    geopoly = polygon_gdf.geometry.iloc[0]
+### End of additions
 
 def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
     if not geopoly.is_simple:
