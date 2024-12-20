@@ -164,6 +164,11 @@ def masked_fast(polygon,elevation,azimuth) -> bool:
 
 class SkyMask:
     group="skymask" 
+    #change poly to a shp from local (or download its geometry) 
+    # poly -> cylindrical polyg from receiver
+    # geopoly -> mask on water alone -> length river about 100m
+    #lon and lat is the receiver coordinates
+    #ellipsHeight -> ortho_height -> 1135
     def __init__(self,poly=None,geopoly=None,lon=None,lat=None,ellipsHeight=None,antennaHeight=None,wavelength=GPSL1.length,noisebandwidth=1):
         
         self.res_elev=[]
