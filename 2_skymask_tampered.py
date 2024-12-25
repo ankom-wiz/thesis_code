@@ -169,7 +169,7 @@ class SkyMask:
     # geopoly -> mask on water alone -> length river about 100m
     #lon and lat is the receiver coordinates
     #ellipsHeight -> ortho_height -> 1135
-    def __init__(self,poly=None,geopoly=None,lon=None,lat=None,ellipsHeight=1135,antennaHeight=None,wavelength=GPSL1.length,noisebandwidth=1):
+    def __init__(self,poly=None,geopoly=None,lon=None,lat=None,ellipsHeight=1135,antennaHeight=2.5,wavelength=GPSL1.length,noisebandwidth=1):
         
         self.res_elev=[]
         self.res_az=[]
