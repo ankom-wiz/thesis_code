@@ -45,6 +45,11 @@ poly = poly_gdf.geometry.iloc[0]  # Get the first (and presumably only) geometry
 geopoly_gdf = gpd.read_file(r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\waterm_geopoly\water_mask.shp")
 geopoly = geopoly_gdf.geometry.iloc[0]  # Get the first geometry
 
+# Verification that the polygons loaded correctly
+print("Cylinder polygon type:", type(poly))
+print("Water mask polygon type:", type(geopoly))
+###
+
 def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
     if not geopoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
