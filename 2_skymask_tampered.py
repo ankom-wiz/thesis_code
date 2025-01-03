@@ -391,4 +391,4 @@ class SimpleMask(SkyMask):
 
 ### Make an object
 # Initialize SkyMask with the geopoly
-skymask = SkyMask(geopoly=jinja_polygon, lon=lon, lat=lat, ellipsHeight=ellipsHeight, antennaHeight=antennaHeight)
+skymask = SkyMask(poly=poly,geopoly=geopoly, lon=lon, lat=lat, ellipsHeight=ellipsHeight, antennaHeight=antennaHeight)
