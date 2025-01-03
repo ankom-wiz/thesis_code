@@ -36,7 +36,7 @@ from numba import jit
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
-### Read properly shapefiles
+### Read properly shapefiles and extract their geometry using geopandas
 # Load the cylindrical polygon around receiver
 poly_gdf = gpd.read_file(r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\poly\jinja_poly.shp")
 poly = poly_gdf.geometry.iloc[0]  # Get the first (and presumably only) geometry
