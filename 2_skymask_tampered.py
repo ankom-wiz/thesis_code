@@ -36,6 +36,15 @@ from numba import jit
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
+### Read properly shapefiles
+# Load the cylindrical polygon around receiver
+poly_gdf = gpd.read_file(r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\poly\jinja_poly.shp")
+poly = poly_gdf.geometry.iloc[0]  # Get the first (and presumably only) geometry
+
+# Load the water mask polygon
+geopoly_gdf = gpd.read_file(r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\waterm_geopoly\water_mask.shp")
+geopoly = geopoly_gdf.geometry.iloc[0]  # Get the first geometry
+
 def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
     if not geopoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
@@ -124,8 +133,7 @@ class SkyMask:
     # geopoly -> mask on water alone -> length river about 100m
     #lon and lat is the receiver coordinates
     #ellipsHeight -> ortho_height -> 1135
-    def __init__(self,poly=r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\poly\jinja_poly.shp",
-                 geopoly=r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\waterm_geopoly\water_mask.shp",
+    def __init__(self,poly=poly,geopoly=geopoly,
                  lon=33.207464,lat=0.414459,ellipsHeight=1135,antennaHeight=2.6,wavelength=GPSL1.length,noisebandwidth=1):
         
         self.res_elev=[]
