@@ -9,10 +9,7 @@ import fiona
 import cartopy
 import shapefile
 #visualization libraries
-%matplotlib inline
 import matplotlib.pyplot as plt
-
-# ^^^ SO FAR SO GOOD IT WORKS
 
 #project modules
 import gnssr4river.fresnel.fresnelzone
