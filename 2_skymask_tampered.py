@@ -130,14 +130,15 @@ def masked_fast(polygon,elevation,azimuth) -> bool:
     return intersections & 1
 
 
-
+# detailed implementation used to manage and manipulate the geometry of sky masks: 
+# areas in the sky that are either "visible" or "masked" based on a receiver's location, elevation and azimuth
 class SkyMask:
     group="skymask" 
-    #change poly to a shp from local (or download its geometry) 
+    # change poly to a shp from local (or download its geometry) 
     # poly -> cylindrical polyg from receiver
     # geopoly -> mask on water alone -> length river about 100m
-    #lon and lat is the receiver coordinates
-    #ellipsHeight -> ortho_height -> 1135
+    # lon and lat is the receiver coordinates
+    # ellipsHeight -> ortho_height -> 1135
     def __init__(self,poly=poly,geopoly=geopoly,lon=33.207464,lat=0.414459,ellipsHeight=1135,antennaHeight=2.6,wavelength=GPSL1.length,noisebandwidth=1):
         
         self.res_elev=[]
