@@ -132,10 +132,13 @@ def masked_fast(polygon,elevation,azimuth) -> bool:
 
 # detailed implementation used to manage and manipulate the geometry of sky masks: 
 # areas in the sky that are either "visible" or "masked" based on a receiver's location, elevation and azimuth
+# tool for managing and processing sky masks
+# functionality includes: saving/loading data, checking if points are masked,
+# handling residuals, and visualizing the mask through sky plots
 class SkyMask:
     group="skymask" 
-    # change poly to a shp from local (or download its geometry) 
-    # poly -> cylindrical polyg from receiver
+    # change poly and geopoly to a shp from local (or download its geometry) 
+    # poly -> cylindrical polygon from receiver
     # geopoly -> mask on water alone -> length river about 100m
     # lon and lat is the receiver coordinates
     # ellipsHeight -> ortho_height -> 1135
@@ -147,12 +150,14 @@ class SkyMask:
         self.poly=None
         self.geopoly=None
 
+        # Global attributes that provide metadata for the sky mask on an xarray.Dataset
         globattr=global_attrs()
         globattr["title"]="GNSS-R selection skymask"
         globattr['GNSSWavelength']=wavelength
         self._ds=xr.Dataset(attrs=globattr) #xarray structure to store things into
         
         # Note all arguments are optional so an empty mask can be created 
+        # Receiver spatial parameters are assigned to instance variables
         self.lon=lon
         self.lat=lat
         self.ellipseHeight=ellipsHeight
@@ -161,13 +166,19 @@ class SkyMask:
         self.antennaHeight=antennaHeight
         self.noiseBandwidth=noisebandwidth
 
+        # Checks if both poly and geopoly are provided at the same time
+        # Raises error because both formats for the mask geometry cannot be specified simultaneously
         if poly is not None and geopoly is not None:
             raise RuntimeError("Input is ambigious if both geopoly and poly are provided")
             
+        # If poly is provided, it sets self.poly to the given polygon 
+        # and uses the azel2geopoly function to convert it into geographic coordinates (longitude/latitude)
         if poly is not None: 
             self.poly=poly
             self.geopoly=azel2geopoly(poly,lon=lon,lat=lat,ellipsHeight=ellipsHeight,antennaHeight=antennaHeight)
-        
+
+        # If geopoly is provided, it sets self.geopoly to the given geographic polygon 
+        # and converts it to azimuth-elevation coordinates using the geo2azelpoly function
         if geopoly is not None:
             self.geopoly=geopoly
             self.poly=geo2azelpoly(geopoly,lon=lon,lat=lat,ellipsHeight=ellipsHeight,antennaHeight=antennaHeight)
@@ -175,9 +186,11 @@ class SkyMask:
     
     def _preppoly(self):
         #for fast polygon computation
+        # Converts the polygon (if it exists) into a numpy array and stores it in self._poly
         if self.poly is not None:
             self._poly=np.array(self.poly.exterior.xy).T
 
+    # Receiver property getter and setter methods
     @property
     def antennaHeight(self):
         return self._ds.attrs['receiver_antennaheight']
@@ -222,6 +235,7 @@ class SkyMask:
     def noiseBandwidth(self,bw):
         self._ds.attrs['receiver_noisebandwidth']=bw
 
+    # Allows loading a SkyMask from a file (NetCDF or Zarr)
     @staticmethod
     def load(filename):
         #start with an empty skymask
@@ -230,6 +244,7 @@ class SkyMask:
         if filename.endswith('.zarr'):
             engine='zarr'
         
+        # Reads  polygon data from WKT format -> initializes the geometry -> prepares polygon for computation
         with xr.open_dataset(filename,group=SkyMask.group,engine=engine) as ds:
             skmsk._ds=ds.copy()
 
@@ -239,6 +254,7 @@ class SkyMask:
         return skmsk
 
 
+    # Checks if the given elevation and azimuth are inside the mask polygon
     def masked (self,elevation,azimuth)-> bool:
         return not masked_fast(self._poly,elevation,azimuth)
         # val2= not self.poly.contains(Point(azimuth,elevation))
@@ -246,12 +262,14 @@ class SkyMask:
         # import pdb;pdb.set_trace()
         # return val
 
+    # Checks points to see if they are inside the mask, returning a boolean array
     def isMasked(self,elevation,azimuth):
         """
         returns a boolean array
         """
         return np.array([self.masked(el,az) for el,az in zip(elevation,azimuth)])
         
+    # Retrieves weights (SNR error) for a given azimuth and elevation using the nearest neighbor interpolation
     def weights(self,azimuth,elevation):
 
         return self._ds.snr_error.sel(azimuth=xr.DataArray(azimuth,dims='narc'),elevation=xr.DataArray(elevation,dims='narc'),method='nearest')
@@ -264,9 +282,11 @@ class SkyMask:
     def title(self,title):
         self._ds.attrs["title"]=title
     
+    # Adds the history attribute of the dataset, including the current timestamp
     def add_history(self,action):
         self._ds.attrs["history"].append(datetime.now().isoformat()+f": {action}")
 
+    # Adds SNR residuals (elevation, azimuth, and SNR residuals) to the class instance
     def append_SNRresidual(self,elev,az,snrres):
         """Append SNR residuals points to the mask
 
@@ -283,6 +303,8 @@ class SkyMask:
         self.res_az.extend(az)
         self.res_snr.extend(snrres)
     
+    # Computes a weight mask using residual SNR 
+    # it calculates a median SNR value for each bin and assigns it to the dataset
     def compute_WeightMask(self,fillmethod='median'):
         if len(self.res_elev) < 10:
             log.info("Enough SMR resildulas must have been added before being able to compute a weight mask")
@@ -309,6 +331,8 @@ class SkyMask:
         self._ds=self._ds.assign_coords(azimuth=(("azimuth",),x_edges[0:-1]+deltad/2),elevation=(("elevation",),y_edges[0:-1]+deltad/2))
                                     
 
+    # Creates a skyplot showing the visibility of satellite signals based on the defined polygon/mask
+    # It can optionally include the weight map (SNR error)
     def skyplot(self,ax=None,**kwargs):
         maskcolor='#e15989'
         #maskcolor='blue'
@@ -338,6 +362,8 @@ class SkyMask:
         return ax
 
 
+    # Saves the mask to a file (NetCDF or Zarr)
+    # polygon geometries are stored as WKT in the file attributes
     def save(self,arName,mode='a'):
         """ Save the mask to an archive (netcdf or zarr), for later reuse
 
@@ -359,6 +385,7 @@ class SkyMask:
             raise RuntimeError(f"archive not supported {arName}")
     
         
+    # Segments the azimuth-elevation polygon into smaller parts (if necessary), creating a new SkyMask object
     def segmentize(self,max_segment_length=1):
         """
         Segmentize the azimuth-elevation polygon and create a new Skymask 
