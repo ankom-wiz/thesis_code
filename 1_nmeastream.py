@@ -27,6 +27,7 @@ nmea_files_path = r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\Jinja
 ### Collect all valid NMEA files
 nmea_files = [os.path.join(nmea_files_path, f) for f in os.listdir(nmea_files_path) if f.endswith(('.gz', '.lz4', '.txt'))]
 
+### WORKS PERFECTLY. DON'T TOUCH.
 
 class NMEAFileStream:
     """
