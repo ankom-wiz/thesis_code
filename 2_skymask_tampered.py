@@ -50,14 +50,19 @@ print("Cylinder polygon type:", type(poly))
 print("Water mask polygon type:", type(geopoly))
 ###
 
+
+# Converts a polygon into an azimuth-elevation polygon (azelpoly)
 def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
+    # Checks if the input polygon has a simple structure (no self-intersections)
     if not geopoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
 
+    # Extracts the polygon's exterior boundary longitude and latitude coordinates
     plon,plat=geopoly.exterior.coords.xy
     ph=ellipsHeight*np.ones(len(plon))
     # We need to convert the lon,lat polygons,fixed to the plane  in the local ENU frame
     e,n,u=geodetic2enu(lat=plat, lon=plon, h=ph, lat0=lat, lon0=lon, h0=ellipsHeight, ell=wgs84, deg=True)
+    # Converts ENU coordinates into azimuth, elevation and range
     az,e,r=enu2aer(e,n,u)
     
     #compute the actual elevation assuming the reflection point is a specular point 
@@ -71,6 +76,7 @@ def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.len
     azelpoly=Polygon(zip(az,elev))
     return azelpoly
 
+# Converts an azimuth-elevation polygon into a geodetic polygon
 def azel2geopoly(azelpoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
     if not azelpoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
@@ -93,6 +99,7 @@ def azel2geopoly(azelpoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.le
     geopoly=Polygon(zip(plon,plat))
     return geopoly
 
+# Determines if a given azimuth-elevation point lies inside a polygon
 @jit(nopython=True)
 def masked_fast(polygon,elevation,azimuth) -> bool:
     """Fast polygon test adapted from this discussion here:https://stackoverflow.com/questions/36399381/whats-the-fastest-way-of-checking-if-a-point-is-inside-a-polygon-in-python"""
