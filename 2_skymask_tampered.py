@@ -53,6 +53,10 @@ print("Water mask polygon type:", type(geopoly))
 
 # Converts a polygon into an azimuth-elevation polygon (azelpoly)
 def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
+    ### Debugging check
+    print("geo2azelpoly: Input geopoly:", geopoly)
+    print("geo2azelpoly: Reference location - lon:", lon, "lat:", lat, "ellipsHeight:", ellipsHeight,
+          "Antenna height:", antennaHeight, "Wavelength:", wavelength)
     # Checks if the input polygon has a simple structure (no self-intersections)
     if not geopoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
@@ -78,6 +82,10 @@ def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.len
 
 # Converts an azimuth-elevation polygon into a geodetic polygon
 def azel2geopoly(azelpoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
+    ### Debugging check
+    print("azel2geopoly: Input azelpoly:", azelpoly)
+    print("azel2geopoly: Reference location - lon:", lon, "lat:", lat, "ellipsHeight:", ellipsHeight,
+          "Antenna height:", antennaHeight, "Wavelength:", wavelength)
     if not azelpoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
     
@@ -430,4 +438,4 @@ class SimpleMask(SkyMask):
 
 ### Make an object
 # Initialize SkyMask with the geopoly
-skymask = SkyMask(poly=poly,geopoly=geopoly, lon=lon, lat=lat, ellipsHeight=ellipsHeight, antennaHeight=antennaHeight)
+# skymask = SkyMask(poly=poly,geopoly=geopoly, lon=lon, lat=lat, ellipsHeight=ellipsHeight, antennaHeight=antennaHeight)
