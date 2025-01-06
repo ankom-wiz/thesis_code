@@ -57,6 +57,8 @@ def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.len
     print("geo2azelpoly: Input geopoly:", geopoly)
     print("geo2azelpoly: Reference location - lon:", lon, "lat:", lat, "ellipsHeight:", ellipsHeight,
           "Antenna height:", antennaHeight, "Wavelength:", wavelength)
+    ###
+    
     # Checks if the input polygon has a simple structure (no self-intersections)
     if not geopoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
@@ -86,6 +88,8 @@ def azel2geopoly(azelpoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.le
     print("azel2geopoly: Input azelpoly:", azelpoly)
     print("azel2geopoly: Reference location - lon:", lon, "lat:", lat, "ellipsHeight:", ellipsHeight,
           "Antenna height:", antennaHeight, "Wavelength:", wavelength)
+    ###
+    
     if not azelpoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
     
