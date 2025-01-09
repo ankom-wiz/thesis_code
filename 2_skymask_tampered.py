@@ -37,6 +37,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 
 ### Read properly shapefiles and extract their geometry using geopandas
+# Disable poly or geopoly to use as tool can't operate with both at the same time
 # Load the cylindrical polygon around receiver
 poly_gdf = gpd.read_file(r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\poly\jinja_poly.shp")
 poly = poly_gdf.geometry.iloc[0]  # Get the first (and presumably only) geometry
@@ -420,25 +421,25 @@ class SkyMask:
 
 
 
-class SimpleMask(SkyMask):
-    def __init__(self,lon,lat,ellipsHeight,antennaHeight,elevations=[5,40],azimuths=[0,360],wavelength=GPSL1.length):
-        pnts=[(azimuths[0],elevations[0]),(azimuths[1],elevations[0]),(azimuths[1],elevations[1]),(azimuths[0],elevations[1]),(azimuths[0],elevations[0])]
-        super().__init__(poly=Polygon(pnts),lon=lon,lat=lat,ellipsHeight=ellipsHeight,antennaHeight=antennaHeight,wavelength=wavelength)
-        self.elevBnds=elevations
-        self.azBnds=azimuths
-
-    def masked (self,elevation,azimuth)-> bool:
-
-        if elevation < self.elevBnds[0] or elevation > self.elevBnds[1]:
-            # import pdb;pdb.set_trace()
-            return True
-        if azimuth < 0:
-            azimuth+=360
-        if azimuth < self.azBnds[0] or azimuth > self.azBnds[1]:
-            # import pdb;pdb.set_trace()
-            return True
-        #ok point is not masked
-        return False
+# class SimpleMask(SkyMask):
+#    def __init__(self,lon,lat,ellipsHeight,antennaHeight,elevations=[5,40],azimuths=[0,360],wavelength=GPSL1.length):
+#        pnts=[(azimuths[0],elevations[0]),(azimuths[1],elevations[0]),(azimuths[1],elevations[1]),(azimuths[0],elevations[1]),(azimuths[0],elevations[0])]
+#        super().__init__(poly=Polygon(pnts),lon=lon,lat=lat,ellipsHeight=ellipsHeight,antennaHeight=antennaHeight,wavelength=wavelength)
+#        self.elevBnds=elevations
+#        self.azBnds=azimuths
+#
+#   def masked (self,elevation,azimuth)-> bool:
+#
+#        if elevation < self.elevBnds[0] or elevation > self.elevBnds[1]:
+#            # import pdb;pdb.set_trace()
+#            return True
+#        if azimuth < 0:
+#            azimuth+=360
+#        if azimuth < self.azBnds[0] or azimuth > self.azBnds[1]:
+#            # import pdb;pdb.set_trace()
+#            return True
+#        #ok point is not masked
+#        return False
 
 ### Make an object
 # Initialize SkyMask with the geopoly
