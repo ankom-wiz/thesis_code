@@ -1,0 +1,3 @@
+# requirements needed to run the workflow scripts, append necessary modules as needed
+git+https://github.com/ITC-Water-Resources/gnssr4water.git
+
