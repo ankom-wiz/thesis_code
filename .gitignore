@@ -163,4 +163,5 @@ cython_debug/
 
 # RR: don't version the local python venv
 pygima
-
+# Don't put all the nnmea files under version controls (too big)
+data/nmea
