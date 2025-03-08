@@ -34,7 +34,6 @@ from numba import jit
 
 ### Added imports
 import geopandas as gpd
-import matplotlib.pyplot as plt
 
 ### Read properly shapefiles and extract their geometry using geopandas
 # Disable poly or geopoly to use as tool can't operate with both at the same time
