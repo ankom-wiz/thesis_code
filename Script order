@@ -1,6 +1,8 @@
 # Order of scripts:
-# 1: nmeastream -> makes a stream of NMEA data
+# 1: nmeastream -> makes a stream of NMEA data*
 # 2: skymask -> puts a sky mask over the data
 # 3: arcbuilder -> creates arcs
 # 4: waterlevel -> creates water level arcs
 # 5: waterlevelestimator -> estimates water level from previous arcs
+
+# * will later be updated to use simulated data feed from another tool
