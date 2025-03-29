@@ -15,6 +15,9 @@
 
 # Author Roelof Rietbroek (r.rietbroek@utwente.nl), 2024
 
+### Added imports
+import geopandas as gpd
+
 from gnssr4water.core.logger import log
 from gnssr4water.io.cf import global_attrs
 from pymap3d.enu import geodetic2enu,enu2aer,aer2enu,enu2geodetic
@@ -27,48 +30,20 @@ from scipy.stats import  binned_statistic_2d
 from shapely.geometry import Polygon,Point
 from shapely import to_wkt,from_wkt
 import xarray as xr
+import os
 from datetime import datetime
 from gnssr4water.core.gnss import GPSL1
 from gnssr4water.fresnel import firstFresnelZone,elev_from_radius
 from numba import jit
 
-### Added imports
-import geopandas as gpd
-
-### Read properly shapefiles and extract their geometry using geopandas
-# Disable poly or geopoly to use as tool can't operate with both at the same time
-# Load the cylindrical polygon around receiver
-poly_gdf = gpd.read_file(r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\poly\jinja_poly.shp")
-poly = poly_gdf.geometry.iloc[0]  # Get the first (and presumably only) geometry
-
-# Load the water mask polygon
-geopoly_gdf = gpd.read_file(r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\waterm_geopoly\water_mask.shp")
-geopoly = geopoly_gdf.geometry.iloc[0]  # Get the first geometry
-
-# Verification that the polygons loaded correctly
-print("Cylinder polygon type:", type(poly))
-print("Water mask polygon type:", type(geopoly))
-###
-
-
-# Converts a polygon into an azimuth-elevation polygon (azelpoly)
 def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
-    ### Debugging check
-    print("geo2azelpoly: Input geopoly:", geopoly)
-    print("geo2azelpoly: Reference location - lon:", lon, "lat:", lat, "ellipsHeight:", ellipsHeight,
-          "Antenna height:", antennaHeight, "Wavelength:", wavelength)
-    ###
-    
-    # Checks if the input polygon has a simple structure (no self-intersections)
     if not geopoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
 
-    # Extracts the polygon's exterior boundary longitude and latitude coordinates
     plon,plat=geopoly.exterior.coords.xy
     ph=ellipsHeight*np.ones(len(plon))
     # We need to convert the lon,lat polygons,fixed to the plane  in the local ENU frame
     e,n,u=geodetic2enu(lat=plat, lon=plon, h=ph, lat0=lat, lon0=lon, h0=ellipsHeight, ell=wgs84, deg=True)
-    # Converts ENU coordinates into azimuth, elevation and range
     az,e,r=enu2aer(e,n,u)
     
     #compute the actual elevation assuming the reflection point is a specular point 
@@ -82,14 +57,7 @@ def geo2azelpoly(geopoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.len
     azelpoly=Polygon(zip(az,elev))
     return azelpoly
 
-# Converts an azimuth-elevation polygon into a geodetic polygon
 def azel2geopoly(azelpoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.length):
-    ### Debugging check
-    print("azel2geopoly: Input azelpoly:", azelpoly)
-    print("azel2geopoly: Reference location - lon:", lon, "lat:", lat, "ellipsHeight:", ellipsHeight,
-          "Antenna height:", antennaHeight, "Wavelength:", wavelength)
-    ###
-    
     if not azelpoly.is_simple:
         log.warning("Cannot (currently) handle polygons with interiors, taking exterior only")
     
@@ -111,7 +79,6 @@ def azel2geopoly(azelpoly,lon,lat,ellipsHeight,antennaHeight,wavelength=GPSL1.le
     geopoly=Polygon(zip(plon,plat))
     return geopoly
 
-# Determines if a given azimuth-elevation point lies inside a polygon
 @jit(nopython=True)
 def masked_fast(polygon,elevation,azimuth) -> bool:
     """Fast polygon test adapted from this discussion here:https://stackoverflow.com/questions/36399381/whats-the-fastest-way-of-checking-if-a-point-is-inside-a-polygon-in-python"""
@@ -149,19 +116,10 @@ def masked_fast(polygon,elevation,azimuth) -> bool:
     return intersections & 1
 
 
-# detailed implementation used to manage and manipulate the geometry of sky masks: 
-# areas in the sky that are either "visible" or "masked" based on a receiver's location, elevation and azimuth
-# tool for managing and processing sky masks
-# functionality includes: saving/loading data, checking if points are masked,
-# handling residuals, and visualizing the mask through sky plots
+
 class SkyMask:
     group="skymask" 
-    # change poly and geopoly to a shp from local (or download its geometry) 
-    # poly -> cylindrical polygon from receiver
-    # geopoly -> mask on water alone -> length river about 100m
-    # lon and lat is the receiver coordinates
-    # ellipsHeight -> ortho_height -> 1135
-    def __init__(self,poly=poly,geopoly=geopoly,lon=33.207464,lat=0.414459,ellipsHeight=1135,antennaHeight=2.6,wavelength=GPSL1.length,noisebandwidth=1):
+    def __init__(self,poly=None,geopoly=None,lon=None,lat=None,ellipsHeight=None,antennaHeight=None,wavelength=GPSL1.length,noisebandwidth=1):
         
         self.res_elev=[]
         self.res_az=[]
@@ -169,14 +127,12 @@ class SkyMask:
         self.poly=None
         self.geopoly=None
 
-        # Global attributes that provide metadata for the sky mask on an xarray.Dataset
         globattr=global_attrs()
         globattr["title"]="GNSS-R selection skymask"
         globattr['GNSSWavelength']=wavelength
         self._ds=xr.Dataset(attrs=globattr) #xarray structure to store things into
         
         # Note all arguments are optional so an empty mask can be created 
-        # Receiver spatial parameters are assigned to instance variables
         self.lon=lon
         self.lat=lat
         self.ellipseHeight=ellipsHeight
@@ -185,19 +141,13 @@ class SkyMask:
         self.antennaHeight=antennaHeight
         self.noiseBandwidth=noisebandwidth
 
-        # Checks if both poly and geopoly are provided at the same time
-        # Raises error because both formats for the mask geometry cannot be specified simultaneously
         if poly is not None and geopoly is not None:
             raise RuntimeError("Input is ambigious if both geopoly and poly are provided")
             
-        # If poly is provided, it sets self.poly to the given polygon 
-        # and uses the azel2geopoly function to convert it into geographic coordinates (longitude/latitude)
         if poly is not None: 
             self.poly=poly
             self.geopoly=azel2geopoly(poly,lon=lon,lat=lat,ellipsHeight=ellipsHeight,antennaHeight=antennaHeight)
-
-        # If geopoly is provided, it sets self.geopoly to the given geographic polygon 
-        # and converts it to azimuth-elevation coordinates using the geo2azelpoly function
+        
         if geopoly is not None:
             self.geopoly=geopoly
             self.poly=geo2azelpoly(geopoly,lon=lon,lat=lat,ellipsHeight=ellipsHeight,antennaHeight=antennaHeight)
@@ -205,11 +155,9 @@ class SkyMask:
     
     def _preppoly(self):
         #for fast polygon computation
-        # Converts the polygon (if it exists) into a numpy array and stores it in self._poly
         if self.poly is not None:
             self._poly=np.array(self.poly.exterior.xy).T
 
-    # Receiver property getter and setter methods
     @property
     def antennaHeight(self):
         return self._ds.attrs['receiver_antennaheight']
@@ -254,17 +202,18 @@ class SkyMask:
     def noiseBandwidth(self,bw):
         self._ds.attrs['receiver_noisebandwidth']=bw
 
-    # Allows loading a SkyMask from a file (NetCDF or Zarr)
     @staticmethod
-    def load(filename):
+    def load(filename,group=None):
         #start with an empty skymask
         skmsk=SkyMask()
         engine=None
         if filename.endswith('.zarr'):
             engine='zarr'
+
+        if group is None:
+            group=SkyMask.group
         
-        # Reads  polygon data from WKT format -> initializes the geometry -> prepares polygon for computation
-        with xr.open_dataset(filename,group=SkyMask.group,engine=engine) as ds:
+        with xr.open_dataset(filename,group=group,engine=engine) as ds:
             skmsk._ds=ds.copy()
 
         skmsk.poly=from_wkt(skmsk._ds.attrs['azelpoly_wkt'])
@@ -273,7 +222,6 @@ class SkyMask:
         return skmsk
 
 
-    # Checks if the given elevation and azimuth are inside the mask polygon
     def masked (self,elevation,azimuth)-> bool:
         return not masked_fast(self._poly,elevation,azimuth)
         # val2= not self.poly.contains(Point(azimuth,elevation))
@@ -281,14 +229,12 @@ class SkyMask:
         # import pdb;pdb.set_trace()
         # return val
 
-    # Checks points to see if they are inside the mask, returning a boolean array
     def isMasked(self,elevation,azimuth):
         """
         returns a boolean array
         """
         return np.array([self.masked(el,az) for el,az in zip(elevation,azimuth)])
         
-    # Retrieves weights (SNR error) for a given azimuth and elevation using the nearest neighbor interpolation
     def weights(self,azimuth,elevation):
 
         return self._ds.snr_error.sel(azimuth=xr.DataArray(azimuth,dims='narc'),elevation=xr.DataArray(elevation,dims='narc'),method='nearest')
@@ -301,11 +247,9 @@ class SkyMask:
     def title(self,title):
         self._ds.attrs["title"]=title
     
-    # Adds the history attribute of the dataset, including the current timestamp
     def add_history(self,action):
         self._ds.attrs["history"].append(datetime.now().isoformat()+f": {action}")
 
-    # Adds SNR residuals (elevation, azimuth, and SNR residuals) to the class instance
     def append_SNRresidual(self,elev,az,snrres):
         """Append SNR residuals points to the mask
 
@@ -322,8 +266,6 @@ class SkyMask:
         self.res_az.extend(az)
         self.res_snr.extend(snrres)
     
-    # Computes a weight mask using residual SNR 
-    # it calculates a median SNR value for each bin and assigns it to the dataset
     def compute_WeightMask(self,fillmethod='median'):
         if len(self.res_elev) < 10:
             log.info("Enough SMR resildulas must have been added before being able to compute a weight mask")
@@ -350,15 +292,13 @@ class SkyMask:
         self._ds=self._ds.assign_coords(azimuth=(("azimuth",),x_edges[0:-1]+deltad/2),elevation=(("elevation",),y_edges[0:-1]+deltad/2))
                                     
 
-    # Creates a skyplot showing the visibility of satellite signals based on the defined polygon/mask
-    # It can optionally include the weight map (SNR error)
     def skyplot(self,ax=None,**kwargs):
         maskcolor='#e15989'
         #maskcolor='blue'
         
         if ax is None:
             fig,ax=mpl.subplots(1,1,subplot_kw={'projection': 'polar'})
-            ax.title='Skyplot mask'
+            ax.set_title='Skyplot mask'
 
             ax.set_rlim([90,0])
             ax.set_theta_zero_location("N")
@@ -381,9 +321,7 @@ class SkyMask:
         return ax
 
 
-    # Saves the mask to a file (NetCDF or Zarr)
-    # polygon geometries are stored as WKT in the file attributes
-    def save(self,arName,mode='a'):
+    def save(self,arName,mode='a',group=None):
         """ Save the mask to an archive (netcdf or zarr), for later reuse
 
             Parameters
@@ -393,18 +331,18 @@ class SkyMask:
             mode: str
             Mode to write ('a' for appending,'w' for overwriting)
         """
+        if group is None:
+            group=SkyMask.group
         #save the polygon  as a WKT attribute to the netcdf file
         self._ds.attrs["azelpoly_wkt"]=to_wkt(self.poly)
         self._ds.attrs["lonlatpoly_wkt"]=to_wkt(self.geopoly)
         if arName.endswith('.nc'):
-            self._ds.to_netcdf(arName,mode=mode,group=SkyMask.group)
+            self._ds.to_netcdf(arName,mode=mode,group=group)
         elif arName.endswith(".zarr"):
-            self._ds.to_zarr(arName,mode=mode,group=SkyMask.group)
+            self._ds.to_zarr(arName,mode=mode,group=group)
         else:
             raise RuntimeError(f"archive not supported {arName}")
-    
-        
-    # Segments the azimuth-elevation polygon into smaller parts (if necessary), creating a new SkyMask object
+   
     def segmentize(self,max_segment_length=1):
         """
         Segmentize the azimuth-elevation polygon and create a new Skymask 
@@ -418,28 +356,17 @@ class SkyMask:
         skmsk=SkyMask(poly=self.poly.segmentize(max_segment_length=max_segment_length),lon=lon,lat=lat,ellipsHeight=oh,antennaHeight=ah)
         return skmsk
 
+### Read properly shapefiles and extract their geometry using geopandas
+# Disable poly or geopoly to use as tool can't operate with both at the same time
+# Load the cylindrical polygon around receiver
+poly_gdf = gpd.read_file(r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\poly\jinja_poly.shp")
+poly = poly_gdf.geometry.iloc[0]  # Get the first (and presumably only) geometry
 
+# Load the water mask polygon
+geopoly_gdf = gpd.read_file(r"C:\Users\Anastasios_Komiotis\Desktop\data_LakeVictoria\waterm_geopoly\water_mask.shp")
+geopoly = geopoly_gdf.geometry.iloc[0]  # Get the first geometry
 
-# class SimpleMask(SkyMask):
-#    def __init__(self,lon,lat,ellipsHeight,antennaHeight,elevations=[5,40],azimuths=[0,360],wavelength=GPSL1.length):
-#        pnts=[(azimuths[0],elevations[0]),(azimuths[1],elevations[0]),(azimuths[1],elevations[1]),(azimuths[0],elevations[1]),(azimuths[0],elevations[0])]
-#        super().__init__(poly=Polygon(pnts),lon=lon,lat=lat,ellipsHeight=ellipsHeight,antennaHeight=antennaHeight,wavelength=wavelength)
-#        self.elevBnds=elevations
-#        self.azBnds=azimuths
-#
-#   def masked (self,elevation,azimuth)-> bool:
-#
-#        if elevation < self.elevBnds[0] or elevation > self.elevBnds[1]:
-#            # import pdb;pdb.set_trace()
-#            return True
-#        if azimuth < 0:
-#            azimuth+=360
-#        if azimuth < self.azBnds[0] or azimuth > self.azBnds[1]:
-#            # import pdb;pdb.set_trace()
-#            return True
-#        #ok point is not masked
-#        return False
-
-### Make an object
-# Initialize SkyMask with the geopoly
-# skymask = SkyMask(poly=poly,geopoly=geopoly, lon=lon, lat=lat, ellipsHeight=ellipsHeight, antennaHeight=antennaHeight)
+# Verification that the polygons loaded correctly
+print("Cylinder polygon type:", type(poly))
+print("Water mask polygon type:", type(geopoly))
+###
