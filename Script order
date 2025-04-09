@@ -1,8 +1,19 @@
 # Order of scripts:
-# 1: nmeastream -> makes a stream of NMEA data*
+# 1: nmeastream -> makes a stream of NMEA data *
 # 2: skymask -> puts a sky mask over the data
 # 3: arcbuilder -> creates arcs
 # 4: waterlevel -> creates water level arcs
 # 5: waterlevelestimator -> estimates water level from previous arcs
+
+The above is the order that the scripts will be used in the pipeline.
+NMEAStream produces a data stream that is then fed into the SkyMask,
+which in turn directs the tool where to search for data.
+
+The masked data is then fed into the SatArcBuilder to create arcs and
+then into WaterLevelArc to produces specifically water level arcs that
+are then used into the waterlevelestimator to get a time series.
+
+Overall the pipeline needs a general inspection for mistakes in direction
+or in general.
 
 # * will later be updated to use simulated data feed from another tool
