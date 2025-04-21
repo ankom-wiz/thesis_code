@@ -118,7 +118,7 @@ def createMaskFromPoly(JinjaLoc):
     jinja_poly=gpd.read_file(jinjashape).loc[0].geometry
     return SkyMask(poly=jinja_poly,lon=JinjaLoc['lon'],lat=JinjaLoc['lat'],ellipsHeight=JinjaLoc['ellipse_height'],antennaHeight=JinjaLoc['recv_height'],wavelength=JinjaLoc['GNSSlambda'])
  
-def createMaskFromGeoPoly(jinjaLoc):
+def createMaskFromGeoPoly(JinjaLoc):
     # Read properly shapefiles and extract their geometry using geopandas
     jinjashape = os.path.join("data", 'gis/poly')
     #Should have been: jinjashape = os.path.join("data", 'gis/waterm_geopoly')
@@ -135,8 +135,8 @@ nmea_stream = NMEAFileStream(nmea_files)
  
 JinjaLoc={"lat":0.414459,"lon":33.207464,"ellipse_height":1135,"recv_height":2.6,"GNSSlambda":GPSL1.length,"noisebandwidth":1}
  
-#skyMask = createMaskFromPoly(JinjaLoc)
-skyMask = createMaskFromGeoPoly(JinjaLoc)
+skyMask = createMaskFromPoly(JinjaLoc)
+#skyMask = createMaskFromGeoPoly(JinjaLoc)
  
 #Create skymask plot
 fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
