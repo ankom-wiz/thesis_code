@@ -28,14 +28,7 @@ def scan_lz4_files(folder):
                 print(f"❌ File {fname} is corrupt: {e}")
             else:
                 print(f"✅ File {fname} is OK")
-
-### Create the NMEA stream object
-nmea_files_path = "data/nmea/jinja/"
-
-# ### Collect all valid NMEA files
-nmea_files = [os.path.join(nmea_files_path, f) for f in os.listdir(nmea_files_path) if f.endswith(('.gz', '.lz4', '.txt'))]
-nmea_stream = NMEAFileStream(nmea_files)
-
+ 
 def save_snr_from_arc(arc,wl_arc):
     """
     Plots the water level arc with a fitted curve and saves the plot as a PNG file.
@@ -119,23 +112,29 @@ def plot_water_level_estimator():
 def createMaskFromPoly(JinjaLoc):
     # Read properly shapefiles and extract their geometry using geopandas
     #setup the path the jinja shapefile
-    jinjashape = os.path.join("data",'gis/poly')
+    jinjashape=os.path.join("data",'gis/poly')
  
     #load the Jinja shapefile
-    jinja_poly = gpd.read_file(jinjashape).loc[0].geometry
+    jinja_poly=gpd.read_file(jinjashape).loc[0].geometry
     return SkyMask(poly=jinja_poly,lon=JinjaLoc['lon'],lat=JinjaLoc['lat'],ellipsHeight=JinjaLoc['ellipse_height'],antennaHeight=JinjaLoc['recv_height'],wavelength=JinjaLoc['GNSSlambda'])
  
-def createMaskFromGeoPoly(JinjaLoc):
+def createMaskFromGeoPoly(jinjaLoc):
     # Read properly shapefiles and extract their geometry using geopandas
-    jinjashape = os.path.join("data", 'gis/waterm_geopoly')
+    jinjashape = os.path.join("data", 'gis/poly')
     #Should have been: jinjashape = os.path.join("data", 'gis/waterm_geopoly')
     #Because we're passing the geopoly below the code should have worked but for some reason the code runs fine with the poly is assigned as geopoly
     jinja_geopoly = gpd.read_file(jinjashape).loc[0].geometry
-    return SkyMask(geopoly=jinja_geopoly, lon=JinjaLoc['lon'], lat=JinjaLoc['lat'], ellipsHeight=JinjaLoc['ellipse_height'], antennaHeight=JinjaLoc['recv_height'], wavelength=JinjaLoc['GNSSlambda'])
-
-JinjaLoc = {"lat":0.414459,"lon":33.207464,"ellipse_height":1135,"recv_height":2.6,"GNSSlambda":GPSL1.length,"noisebandwidth":1}
-
-### Comment and uncomment to used Poly or GeoPoly for the SkyMask
+    return SkyMask(geopoly=jinja_geopoly,lon=JinjaLoc['lon'],lat=JinjaLoc['lat'],ellipsHeight=JinjaLoc['ellipse_height'],antennaHeight=JinjaLoc['recv_height'],wavelength=JinjaLoc['GNSSlambda'])
+ 
+### Create the NMEA stream object
+nmea_files_path = "data/nmea/jinja/"
+ 
+# ### Collect all valid NMEA files
+nmea_files = [os.path.join(nmea_files_path, f) for f in os.listdir(nmea_files_path) if f.endswith(('.gz', '.lz4', '.txt'))]
+nmea_stream = NMEAFileStream(nmea_files)
+ 
+JinjaLoc={"lat":0.414459,"lon":33.207464,"ellipse_height":1135,"recv_height":2.6,"GNSSlambda":GPSL1.length,"noisebandwidth":1}
+ 
 #skyMask = createMaskFromPoly(JinjaLoc)
 skyMask = createMaskFromGeoPoly(JinjaLoc)
  
