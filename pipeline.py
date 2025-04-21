@@ -131,7 +131,7 @@ def createMaskFromGeoPoly(JinjaLoc):
     #Should have been: jinjashape = os.path.join("data", 'gis/waterm_geopoly')
     #Because we're passing the geopoly below the code should have worked but for some reason the code runs fine with the poly is assigned as geopoly
     jinja_geopoly = gpd.read_file(jinjashape).loc[0].geometry
-    return SkyMask(geopoly=Jinja_geopoly, lon=JinjaLoc['lon'], lat=JinjaLoc['lat'], ellipsHeight=JinjaLoc['ellipse_height'], antennaHeight=JinjaLoc['recv_height'], wavelength=JinjaLoc['GNSSlambda'])
+    return SkyMask(geopoly=jinja_geopoly, lon=JinjaLoc['lon'], lat=JinjaLoc['lat'], ellipsHeight=JinjaLoc['ellipse_height'], antennaHeight=JinjaLoc['recv_height'], wavelength=JinjaLoc['GNSSlambda'])
 
 JinjaLoc = {"lat":0.414459,"lon":33.207464,"ellipse_height":1135,"recv_height":2.6,"GNSSlambda":GPSL1.length,"noisebandwidth":1}
 
