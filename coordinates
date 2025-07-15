@@ -2,3 +2,5 @@
 # Receiver height is approximate 2.5 meter above water surface, orthometric height is also a guesstimate
 Jinja={"lat":0.414459,"lon":33.207464,"ortho_height":1135,"recv_height":2.6} 
 # Receiver height is approximate 2.5 meter above water surface, orthometric height is also a guesstimate
+
+Geographic Coordinate System:	GCS_WGS_1984
