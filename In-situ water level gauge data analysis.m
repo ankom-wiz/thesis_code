@@ -1,10 +1,14 @@
 %% =====================================================================
 %  GAUGE DATA ANALYSIS TOOL
 %  Computes overall, monthly, and weekly statistics for CSV water level
-%  gauge data, and also computes high-resolution deviation from daily mean.
+%  gauge data, and also computes high-resolution deviation from daily mean
+%  for use in surface roughness or hydrological modeling.
+%
+%  Additionally, plots the raw water level data vs. time.
 %
 %  Output:
 %   - Command Window summary (overall/monthly/weekly stats)
+%   - Plot of in-situ water level gauge
 %   - highResGaugeData.mat (per-observation deviation dataset)
 %  =====================================================================
 
@@ -87,7 +91,6 @@ end
 
 %% =====================================================================
 %  HIGH-RESOLUTION DEVIATION ANALYSIS (from jinja_gauge_highres.m)
-%  Computes per-observation deviation from daily mean
 % =====================================================================
 
 fprintf('\n=== High-Resolution Daily Deviation Analysis ===\n');
@@ -97,7 +100,7 @@ T = sortrows(data, 'Date');
 T = rmmissing(T, 'DataVariables', 'Gauge');
 
 % --- Compute daily mean for each observation ---
-dayVec = dateshift(T.Date, 'start', 'day');   % Day for each observation
+dayVec = dateshift(T.Date, 'start', 'day');
 [G, ~] = findgroups(dayVec);
 dailyMean = splitapply(@mean, T.Gauge, G);
 dailyMeanObs = dailyMean(G);
@@ -110,5 +113,21 @@ highResGaugeData.Timestamp = T.Date;
 highResGaugeData.Deviation = deviation;
 
 save('highResGaugeData.mat', 'highResGaugeData');
-
 fprintf('Saved high-resolution deviation dataset: highResGaugeData.mat\n');
+
+%% =====================================================================
+%  PLOT: In-situ Water Level Gauge
+% =====================================================================
+
+figure('Color','w');
+plot(data.Date, data.Gauge, 'b.-', 'LineWidth', 1.2, 'MarkerSize', 10);
+xlabel('Time');
+ylabel('Water Level (m)');
+title('In-situ Water Level Gauge Measurements');
+legend('Water gauge level (m)', 'Location', 'best');
+grid on;
+datetick('x','mmm','keeplimits'); % Show month names on X-axis
+set(gca, 'FontSize', 11);
+
+fprintf('Plot generated: In-situ water level gauge vs. time.\n');
+fprintf('===============================================================\n');
