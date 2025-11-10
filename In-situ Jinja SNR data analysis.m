@@ -200,7 +200,8 @@ xlabel('SNR (dB)');
 ylabel('Probability Density');
 title('Histogram and Normal Distribution of SNR');
 grid on;
-legend('Location', 'best');
+% Legend fixed in upper-left corner
+legend('Location', 'northwest', 'Box', 'on');
 
 % === Summary box ===
 statsText = sprintf(['Mean = %.2f\nMedian = %.2f\nSD = %.2f\n' ...
@@ -218,3 +219,4 @@ text(0.98, 0.95, statsText, ...
      'EdgeColor', [0.5 0.5 0.5], ...
      'FontSize', 10, ...
      'Margin', 4);
+
