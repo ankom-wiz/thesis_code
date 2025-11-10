@@ -131,3 +131,21 @@ set(gca, 'FontSize', 11);
 
 fprintf('Plot generated: In-situ water level gauge vs. time.\n');
 fprintf('===============================================================\n');
+
+%% =====================================================================
+%  PLOT: Weekly Mean Water Levels (same X-axis style as monthly plot)
+% =====================================================================
+
+figure('Color','w'); % Open in a new window
+plot(unique_weeks, weekly_Mean, 'r-o', 'LineWidth', 1.5, 'MarkerSize', 6);
+xlabel('Time');
+ylabel('Weekly Mean Water Level (m)');
+title('Weekly Mean Water Level Gauge Measurements');
+grid on;
+
+% --- Match the same month-based X-axis style ---
+datetick('x','mmm','keeplimits'); % Label axis with month abbreviations
+xlim([min(data.Date) max(data.Date)]); % Match full date range of dataset
+
+set(gca, 'FontSize', 11);
+legend('Weekly Mean', 'Location', 'best');
