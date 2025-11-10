@@ -242,13 +242,6 @@ for a = 1:numel(arcList)
     sim_vv = abs(result.phasor_interf(sim_start:sim_end));
     sim_vv_norm = sim_vv / max(sim_vv(~isnan(sim_vv)));
 
-    % --- Interpolation (if length mismatch) ---
-    if numel(sim_vv_norm) ~= numel(obs_vv_norm)
-        sim_idx = linspace(1, numel(sim_vv_norm), numel(sim_vv_norm));
-        obs_idx = linspace(1, numel(sim_vv_norm), numel(obs_vv_norm));
-        sim_vv_norm = interp1(sim_idx, sim_vv_norm, obs_idx, 'linear', 'extrap');
-    end
-
     % --- Plot ---
     ax = nexttile;
     plot(ax, sin(deg2rad(obs_elev)), sim_vv_norm, 'r-', 'LineWidth', 1.5, 'DisplayName', 'Simulated'); hold(ax, 'on');
