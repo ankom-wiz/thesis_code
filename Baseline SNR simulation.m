@@ -80,11 +80,11 @@ end
 sett = snr_settings();
 
 %% Step 2: Customize antenna
-sett.ref.height_ant = 2.6;                  % Antenna height (m)
-sett.ant.slope = 'tipped';                  % Antenna tilted 90°
-sett.ant.aspect = 176;                      % Azimuth mean = 176°; reflections mainly from southward azimuths
-sett.ant.model = 'isotropic horizontal';    % Use patch-like antenna model
-sett.ant.radome = 'NONE';                   % Antenna (isotropic model) has no radome
+sett.ref.height_ant = 2.6;                % Antenna height (m)
+sett.ant.slope = 'tipped';                % Antenna tilted 90°
+sett.ant.aspect = 176;                    % Azimuth mean = 176°; reflections mainly from southward azimuths
+sett.ant.model = 'isotropic horizontal';  % Use patch-like antenna model
+sett.ant.radome = 'NONE';                 % Antenna (isotropic model) has no radome
 
 %% Step 3: Define surface properties
 % Surface geometry
@@ -106,17 +106,17 @@ sett.sfc.material_top = 'air';           % top halfspace = air
 sett.sfc.material_bottom = 'freshwater'; % bottom halfspace = water (interface is air-water)
 
 %% Step 4: GNSS and signal configuration
-sett.opt.gnss_name = 'GPS';
-sett.opt.freq_name = 'L1';
+sett.opt.gnss_name = 'GPS';                  % Define GNSS constellation
+sett.opt.freq_name = 'L1';                   % Define GNSS frequency band
 sett.opt.rec.bandwidth_noise = 1;            % Hz
-sett.opt.rec.temperature_noise = 300;        % Rec. thermal noise (Kelvin)- room temp. (>290 due to local climate)
-sett.opt.rec.ant_density_noise_db = -199.3;  % dB-W/Hz -- thermal environmental noise (empirical testing)
+sett.opt.rec.temperature_noise = 300;        % Rec. thermal noise (Kelvin)- room temp.
+sett.opt.rec.ant_density_noise_db = -199.3;  % dB-W/Hz - environmental noise (empirical testing)
 
 %% Step 5: Observation directions
 sett.sat.num_obs = numel(elev_ds);  % Match number of real observations
-sett.sat.elev = elev_ds(:);
-sett.sat.azim = azim_ds(:);
-sett.sat.epoch = time_ds(:);
+sett.sat.elev = elev_ds(:);         % Match/input observed elevation
+sett.sat.azim = azim_ds(:);         % Match/input observed azimuth
+sett.sat.epoch = time_ds(:);        % Match/input observed timestamps
 
 %% Step 6: Prepare the simulation setup
 setup = snr_setup(sett);
@@ -239,7 +239,7 @@ for a = 1:numel(arcList)
         continue;
     end
 
-    sim_vv = abs(result.phasor_interf(sim_start:sim_end));
+    sim_vv = result.phasor_interf(sim_start:sim_end);
     sim_vv_norm = sim_vv / max(sim_vv(~isnan(sim_vv)));
 
     % --- Plot ---
